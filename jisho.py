@@ -1,9 +1,7 @@
-import json, requests, argparse, os.path, csv, sys
+import json, requests, os.path, csv, sys
 
-parser = argparse.ArgumentParser(epilog='Note: because there are Japanese characters, you must use utf8 encoding when opening files (including this script)',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--outfile', help='output results CSV file name', default='jisho_results.csv')
-parser.add_argument('--max_results', help='maximum results you want returned for a query', default=3)
-args = parser.parse_args()
+DEFAULT_RESULTS_FILE_NAME = 'jisho_results.csv'
+DEFAULT_MAX_RESULTS = 3
 
 def concat_japanese_definitions(definition_info):
   concatenated = ''
@@ -30,6 +28,22 @@ def concat_english_definitions(definition_info):
 
 jisho_api_endpoint = 'https://jisho.org/api/v1/search/words?keyword='
 
+print('Note: because there are Japanese characters, use utf8 encoding when opening files (including this script).\n\
+Also, use something like the Python interactive shell (not cmd) to see Japanese characters in the console output.\n')
+
+#TODO: input validation
+
+print('Enter the name of the file you\'d like the results to be saved to (leave blank for default = % s): '% DEFAULT_RESULTS_FILE_NAME, end='')
+outfile = input();
+if not outfile:
+  outfile = DEFAULT_RESULTS_FILE_NAME
+
+print('Enter the maximum number of results you want per query (leave blank for default = 3): ', end='')
+try:
+  max_results = int(input());
+except:
+  max_results = DEFAULT_MAX_RESULTS
+
 #continuously accept input until user quits
 while True:
   print('Enter your query (as you would on jisho.org), or enter \'\q\' to quit: ', end='')
@@ -46,17 +60,17 @@ while True:
       print('No results found\n')
       continue;
 
-    if not os.path.isfile(args.outfile):
-      results_csv = open(args.outfile, 'x', newline='', encoding='utf-8')
+    if not os.path.isfile(outfile):
+      results_csv = open(outfile, 'x', newline='', encoding='utf-8')
       writer = csv.writer(results_csv, delimiter=',')
       header = ['Japanese', 'English', 'JLPT level']
       writer.writerow(header)
     else:
-      results_csv = open(args.outfile, 'a', newline='', encoding='utf-8')
+      results_csv = open(outfile, 'a', newline='', encoding='utf-8')
       writer = csv.writer(results_csv, delimiter=',')
 
     jisho_search_url = 'https://jisho.org/search/'
-    for i in range(0, min(args.max_results, len(data))):
+    for i in range(0, min(max_results, len(data))):
       entry = data[i]
       japanese = concat_japanese_definitions(entry['japanese'])
       english = concat_english_definitions(entry['senses'])
